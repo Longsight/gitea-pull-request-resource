@@ -19,6 +19,8 @@ configure_ssl_verification "${payload}"
 uri="$(jq -r '.source.uri // ""' < "${payload}")"
 private_token="$(jq -r '.source.private_token // ""' < "${payload}")"
 no_ssl="$(jq -r '.source.no_ssl // ""' < "${payload}")"
+head_branch="$(jq -r '.source.head_branch // ""' < "${payload}")"
+base_branch="$(jq -r '.source.base_branch // ""' < "${payload}")"
 ref="$(jq -r '.version.ref // ""' < "${payload}")"
 version_sha=$(echo $ref | awk -F':' '{print $1}')
 branch=$(echo $ref | awk -F':' '{print $2}')
@@ -60,7 +62,14 @@ for i in $(seq 0 $((num_mrs - 1))); do
     mr="$(echo "${open_mrs}" | jq -r '.['"$i"']')"
     mr_sha="$(echo "${mr}" | jq -r '.head.sha')"
     mr_branch="$(echo "${mr}" | jq -r '.head.ref')"
+    mr_base="$(echo "${mr}" | jq -r '.base.ref')"
     mr_index="$(echo "${mr}" | jq -r '.number')"
+    if [ ! -z "${head_branch}" ] && [ "${head_branch}" != "${mr_branch}" ]; then
+        continue
+    fi
+    if [ ! -z "${base_branch}" ] && [ "${base_branch}" != "${mr_base}" ]; then
+        continue
+    fi
     if [ "${mr_sha}" != "null" ]; then
         set +e
 
